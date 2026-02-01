@@ -1,0 +1,141 @@
+Build an Android application designed for couples to exchange secret messages and media while remaining completely hidden as a normal calculator app.
+
+Core Concept
+
+The app must look and function exactly like a real calculator. For a normal person, it should be indistinguishable from a standard calculator application.
+
+Only when a specific 4 digit code is entered using the calculator keypad should the app unlock and reveal a hidden private chat interface.
+
+Calculator Disguise Requirements
+
+App opens directly into a fully working calculator
+
+Calculator must perform real calculations correctly
+
+No visible hint that the app is anything other than a calculator
+
+If the wrong code or no code is entered, the app continues acting only as a calculator
+
+When the correct 4 digit code is entered, navigate to the hidden chat UI
+
+Pairing System
+
+App uses a pairing code system
+
+One user generates a pairing code
+
+Another user joins using the same pairing code
+
+Messages, media, and calls only work between paired users
+
+Pairing code logic is the core communication logic
+
+Messaging Features
+
+WhatsApp style chat UI
+
+One to one private chat only
+
+Support:
+
+Text messages
+
+Images
+
+Videos
+
+Audio files
+
+Voice recordings
+
+Calling Features
+
+Real time audio calling
+
+Real time video calling
+
+Calling experience similar to Telegram
+
+Use WebRTC or any free real time communication solution
+
+Calls must only work between paired users
+
+Call history must remain hidden and vanish when app locks back to calculator mode
+
+Privacy and Vanish Logic
+
+When user presses:
+
+Back button
+
+Home button
+
+Power button
+
+App must instantly:
+
+Hide chat UI
+
+Switch back to calculator mode
+
+Clear chat screen from recent apps view
+
+No message content should be visible without entering the 4 digit code
+
+Notifications
+
+Notifications must not show message content
+
+Notification text should look generic (example: Calculator notification)
+
+Message content only visible after entering the 4 digit code inside the calculator
+
+Backend and Database Constraints
+
+I do NOT have money to buy paid services
+
+Use only free tier solutions
+
+Database must be free (example: Firebase free tier or similar alternative)
+
+Optimize for minimal cost and bandwidth usage
+
+Server Requirements
+
+Create a backend using Node.js
+
+Create a file named server.js
+
+Place server.js inside a /render directory
+
+Server must be compatible with Render.com free hosting
+
+All APIs (auth, pairing, messaging, calls signaling) should use the Render hosted URL
+
+👉 IMPORTANT:
+Add clear comments in the code where I can insert or change:
+
+// TODO: ADD YOUR OWN SERVER URL HERE
+
+
+This hosted Render URL will be used as the base API URL throughout the Android app.
+
+Technical Notes
+
+Use free authentication method
+
+Encrypt messages if possible using lightweight encryption
+
+Ensure app performance is smooth on low end Android devices
+
+UI should look modern but minimal
+
+Final Behavior Summary
+
+To outsiders: a normal calculator app
+
+To paired users with the 4 digit code: a private messaging and calling app
+
+No visible traces without unlocking
+
+Strong privacy focused design
