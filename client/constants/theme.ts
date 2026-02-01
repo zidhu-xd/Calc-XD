@@ -1,30 +1,53 @@
 import { Platform } from "react-native";
 
-const tintColorLight = "#007AFF";
-const tintColorDark = "#0A84FF";
+export const CalculatorColors = {
+  background: "#FFFFFF",
+  display: "#F5F5F5",
+  buttons: "#E0E0E0",
+  operators: "#FF9800",
+  operatorText: "#FFFFFF",
+  text: "#212121",
+  buttonPressed: "#D0D0D0",
+};
+
+export const ChatColors = {
+  primary: "#6B4E8E",
+  background: "#F9F7FC",
+  surface: "#FFFFFF",
+  sentBubble: "#6B4E8E",
+  receivedBubble: "#E8E0F0",
+  textPrimary: "#2D2D2D",
+  textSecondary: "#757575",
+  accent: "#A78BCC",
+  border: "#E0D8EC",
+  inputBackground: "#FFFFFF",
+};
+
+const tintColorLight = "#6B4E8E";
+const tintColorDark = "#A78BCC";
 
 export const Colors = {
   light: {
-    text: "#11181C",
+    text: "#2D2D2D",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#687076",
+    tabIconDefault: "#757575",
     tabIconSelected: tintColorLight,
-    link: "#007AFF",
-    backgroundRoot: "#FFFFFF", // Elevation 0
-    backgroundDefault: "#F2F2F2", // Elevation 1
-    backgroundSecondary: "#E6E6E6", // Elevation 2
-    backgroundTertiary: "#D9D9D9", // Elevation 3
+    link: "#6B4E8E",
+    backgroundRoot: "#F9F7FC",
+    backgroundDefault: "#FFFFFF",
+    backgroundSecondary: "#F0EBF5",
+    backgroundTertiary: "#E8E0F0",
   },
   dark: {
     text: "#ECEDEE",
     buttonText: "#FFFFFF",
     tabIconDefault: "#9BA1A6",
     tabIconSelected: tintColorDark,
-    link: "#0A84FF",
-    backgroundRoot: "#1F2123", // Elevation 0
-    backgroundDefault: "#2A2C2E", // Elevation 1
-    backgroundSecondary: "#353739", // Elevation 2
-    backgroundTertiary: "#404244", // Elevation 3
+    link: "#A78BCC",
+    backgroundRoot: "#1A1520",
+    backgroundDefault: "#2A2435",
+    backgroundSecondary: "#352F45",
+    backgroundTertiary: "#453E55",
   },
 };
 
@@ -89,17 +112,23 @@ export const Typography = {
     lineHeight: 24,
     fontWeight: "400" as const,
   },
+  calculatorDisplay: {
+    fontSize: 48,
+    lineHeight: 56,
+    fontWeight: "400" as const,
+  },
+  calculatorButton: {
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: "500" as const,
+  },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: "ui-monospace",
   },
   default: {
