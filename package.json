@@ -64,7 +64,8 @@
     "uuid": "^13.0.0",
     "ws": "^8.18.0",
     "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0"
+    "zod-validation-error": "^3.4.0",
+    "typescript": "~5.9.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
@@ -77,8 +78,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-node": "^0.3.9",
     "eslint-plugin-prettier": "^5.5.4",
-    "prettier": "3.6.2",
-    "typescript": "~5.9.2"
+    "prettier": "3.6.2"
   },
   "private": true
 }
