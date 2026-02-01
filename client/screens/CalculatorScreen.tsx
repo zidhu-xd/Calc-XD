@@ -9,34 +9,38 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { Feather } from "@expo/vector-icons";
 
-import { CalculatorColors, Typography } from "@/constants/theme";
+import { CalculatorColors } from "@/constants/theme";
 import { useApp } from "@/context/AppContext";
 import * as Storage from "@/lib/storage";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const BUTTON_MARGIN = 8;
-const BUTTON_SIZE = (SCREEN_WIDTH - BUTTON_MARGIN * 10) / 4;
+const BUTTON_GAP = 12;
+const BUTTON_SIZE = (SCREEN_WIDTH - BUTTON_GAP * 5) / 4;
+
+type ButtonType = "number" | "operator" | "function" | "equals" | "clear" | "backspace";
 
 type CalculatorButton = {
   label: string;
-  type: "number" | "operator" | "function" | "equals";
+  type: ButtonType;
   value: string;
+  icon?: string;
 };
 
 const BUTTONS: CalculatorButton[][] = [
   [
-    { label: "C", type: "function", value: "C" },
-    { label: "+/-", type: "function", value: "+/-" },
-    { label: "%", type: "function", value: "%" },
-    { label: "/", type: "operator", value: "/" },
+    { label: "AC", type: "clear", value: "AC" },
+    { label: "()", type: "function", value: "()" },
+    { label: "%", type: "operator", value: "%" },
+    { label: "\u00F7", type: "operator", value: "/" },
   ],
   [
     { label: "7", type: "number", value: "7" },
     { label: "8", type: "number", value: "8" },
     { label: "9", type: "number", value: "9" },
-    { label: "x", type: "operator", value: "*" },
+    { label: "\u00D7", type: "operator", value: "*" },
   ],
   [
     { label: "4", type: "number", value: "4" },
@@ -53,6 +57,7 @@ const BUTTONS: CalculatorButton[][] = [
   [
     { label: "0", type: "number", value: "0" },
     { label: ".", type: "number", value: "." },
+    { label: "backspace", type: "backspace", value: "backspace", icon: "delete" },
     { label: "=", type: "equals", value: "=" },
   ],
 ];
@@ -60,10 +65,9 @@ const BUTTONS: CalculatorButton[][] = [
 interface CalcButtonProps {
   button: CalculatorButton;
   onPress: () => void;
-  isWide?: boolean;
 }
 
-function CalcButton({ button, onPress, isWide }: CalcButtonProps) {
+function CalcButton({ button, onPress }: CalcButtonProps) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -71,20 +75,25 @@ function CalcButton({ button, onPress, isWide }: CalcButtonProps) {
   }));
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.95, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(0.92, { damping: 15, stiffness: 400 });
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(1, { damping: 15, stiffness: 400 });
   };
 
   const getButtonStyle = () => {
     switch (button.type) {
       case "operator":
-      case "equals":
         return styles.operatorButton;
+      case "equals":
+        return styles.equalsButton;
+      case "clear":
+        return styles.clearButton;
       case "function":
-        return styles.functionButton;
+        return styles.operatorButton;
+      case "backspace":
+        return styles.numberButton;
       default:
         return styles.numberButton;
     }
@@ -92,22 +101,17 @@ function CalcButton({ button, onPress, isWide }: CalcButtonProps) {
 
   const getTextStyle = () => {
     switch (button.type) {
-      case "operator":
       case "equals":
-        return styles.operatorText;
+        return styles.equalsText;
+      case "clear":
+        return styles.clearText;
       default:
         return styles.buttonText;
     }
   };
 
   return (
-    <Animated.View
-      style={[
-        styles.buttonWrapper,
-        isWide ? styles.wideButton : null,
-        animatedStyle,
-      ]}
-    >
+    <Animated.View style={[styles.buttonWrapper, animatedStyle]}>
       <Pressable
         style={[styles.button, getButtonStyle()]}
         onPress={onPress}
@@ -115,7 +119,11 @@ function CalcButton({ button, onPress, isWide }: CalcButtonProps) {
         onPressOut={handlePressOut}
         testID={`calc-button-${button.label}`}
       >
-        <Text style={[styles.buttonLabel, getTextStyle()]}>{button.label}</Text>
+        {button.icon ? (
+          <Feather name="delete" size={24} color={CalculatorColors.text} />
+        ) : (
+          <Text style={[styles.buttonLabel, getTextStyle()]}>{button.label}</Text>
+        )}
       </Pressable>
     </Animated.View>
   );
@@ -126,11 +134,33 @@ export default function CalculatorScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { unlock, isSetupComplete, isPaired } = useApp();
 
-  const [display, setDisplay] = useState("0");
-  const [firstOperand, setFirstOperand] = useState<number | null>(null);
-  const [operator, setOperator] = useState<string | null>(null);
-  const [waitingForSecondOperand, setWaitingForSecondOperand] = useState(false);
+  const [expression, setExpression] = useState("");
+  const [result, setResult] = useState("0");
   const [secretCode, setSecretCode] = useState("");
+
+  const getDisplayOperator = (op: string): string => {
+    switch (op) {
+      case "*": return "\u00D7";
+      case "/": return "\u00F7";
+      default: return op;
+    }
+  };
+
+  const evaluateExpression = (expr: string): string => {
+    try {
+      if (!expr) return "0";
+      const sanitized = expr.replace(/\u00D7/g, "*").replace(/\u00F7/g, "/");
+      const calculated = Function(`'use strict'; return (${sanitized})`)();
+      if (isNaN(calculated) || !isFinite(calculated)) return "0";
+      const resultStr = String(calculated);
+      if (resultStr.includes(".") && resultStr.split(".")[1].length > 8) {
+        return calculated.toFixed(8).replace(/\.?0+$/, "");
+      }
+      return resultStr;
+    } catch {
+      return "0";
+    }
+  };
 
   const checkSecretCode = useCallback(async (code: string) => {
     if (code.length === 4) {
@@ -167,81 +197,68 @@ export default function CalculatorScreen() {
       checkSecretCode(newCode);
     }
 
-    if (waitingForSecondOperand) {
-      setDisplay(value);
-      setWaitingForSecondOperand(false);
-    } else {
-      if (value === "." && display.includes(".")) return;
-      setDisplay(display === "0" && value !== "." ? value : display + value);
+    if (value === "." && expression.includes(".")) {
+      const lastOperatorIndex = Math.max(
+        expression.lastIndexOf("+"),
+        expression.lastIndexOf("-"),
+        expression.lastIndexOf("*"),
+        expression.lastIndexOf("/")
+      );
+      const lastNumber = expression.slice(lastOperatorIndex + 1);
+      if (lastNumber.includes(".")) return;
     }
-  }, [display, waitingForSecondOperand, secretCode, isSetupComplete, checkSecretCode, navigation]);
+
+    const newExpr = expression + value;
+    setExpression(newExpr);
+    setResult(evaluateExpression(newExpr));
+  }, [expression, secretCode, isSetupComplete, checkSecretCode, navigation]);
 
   const handleOperatorPress = useCallback((op: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSecretCode("");
 
-    const inputValue = parseFloat(display);
+    if (!expression) return;
 
-    if (firstOperand === null) {
-      setFirstOperand(inputValue);
-    } else if (operator) {
-      const result = calculate(firstOperand, inputValue, operator);
-      setDisplay(String(result));
-      setFirstOperand(result);
+    const lastChar = expression.slice(-1);
+    const operators = ["+", "-", "*", "/", "%"];
+    
+    if (operators.includes(lastChar)) {
+      const newExpr = expression.slice(0, -1) + op;
+      setExpression(newExpr);
+    } else {
+      const newExpr = expression + op;
+      setExpression(newExpr);
     }
-
-    setOperator(op);
-    setWaitingForSecondOperand(true);
-  }, [display, firstOperand, operator]);
-
-  const calculate = (first: number, second: number, op: string): number => {
-    switch (op) {
-      case "+":
-        return first + second;
-      case "-":
-        return first - second;
-      case "*":
-        return first * second;
-      case "/":
-        return second !== 0 ? first / second : 0;
-      default:
-        return second;
-    }
-  };
+  }, [expression]);
 
   const handleEqualsPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSecretCode("");
 
-    if (operator && firstOperand !== null) {
-      const secondOperand = parseFloat(display);
-      const result = calculate(firstOperand, secondOperand, operator);
-      setDisplay(String(result));
-      setFirstOperand(null);
-      setOperator(null);
-      setWaitingForSecondOperand(false);
+    if (expression) {
+      const finalResult = evaluateExpression(expression);
+      setExpression(finalResult);
+      setResult(finalResult);
     }
-  }, [display, firstOperand, operator]);
+  }, [expression]);
 
-  const handleFunctionPress = useCallback((func: string) => {
+  const handleClearPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSecretCode("");
+    setExpression("");
+    setResult("0");
+  }, []);
 
-    switch (func) {
-      case "C":
-        setDisplay("0");
-        setFirstOperand(null);
-        setOperator(null);
-        setWaitingForSecondOperand(false);
-        break;
-      case "+/-":
-        setDisplay(String(parseFloat(display) * -1));
-        break;
-      case "%":
-        setDisplay(String(parseFloat(display) / 100));
-        break;
+  const handleBackspacePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSecretCode("");
+    
+    if (expression.length > 0) {
+      const newExpr = expression.slice(0, -1);
+      setExpression(newExpr);
+      setResult(newExpr ? evaluateExpression(newExpr) : "0");
     }
-  }, [display]);
+  }, [expression]);
 
   const handleButtonPress = useCallback((button: CalculatorButton) => {
     switch (button.type) {
@@ -254,35 +271,47 @@ export default function CalculatorScreen() {
       case "equals":
         handleEqualsPress();
         break;
+      case "clear":
+        handleClearPress();
+        break;
+      case "backspace":
+        handleBackspacePress();
+        break;
       case "function":
-        handleFunctionPress(button.value);
         break;
     }
-  }, [handleNumberPress, handleOperatorPress, handleEqualsPress, handleFunctionPress]);
+  }, [handleNumberPress, handleOperatorPress, handleEqualsPress, handleClearPress, handleBackspacePress]);
 
-  const formatDisplay = (value: string): string => {
-    const num = parseFloat(value);
-    if (isNaN(num)) return "0";
-    if (value.length > 12) {
-      return num.toExponential(5);
-    }
-    return value;
+  const formatExpression = (expr: string): string => {
+    return expr
+      .replace(/\*/g, "\u00D7")
+      .replace(/\//g, "\u00F7");
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
       <View style={styles.displayContainer}>
         <Text
-          style={styles.display}
+          style={styles.expression}
           numberOfLines={1}
           adjustsFontSizeToFit
-          testID="calc-display"
+          testID="calc-expression"
         >
-          {formatDisplay(display)}
+          {formatExpression(expression) || "0"}
         </Text>
+        {expression.length > 0 && (
+          <Text
+            style={styles.result}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            testID="calc-display"
+          >
+            {result}
+          </Text>
+        )}
       </View>
 
-      <View style={[styles.buttonsContainer, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.buttonsContainer, { paddingBottom: insets.bottom + 20 }]}>
         {BUTTONS.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
             {row.map((button, buttonIndex) => (
@@ -290,7 +319,6 @@ export default function CalculatorScreen() {
                 key={buttonIndex}
                 button={button}
                 onPress={() => handleButtonPress(button)}
-                isWide={button.label === "0"}
               />
             ))}
           </View>
@@ -310,30 +338,32 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "flex-end",
     paddingHorizontal: 24,
-    paddingBottom: 20,
-    backgroundColor: CalculatorColors.display,
+    paddingBottom: 30,
   },
-  display: {
-    fontSize: Typography.calculatorDisplay.fontSize,
-    fontWeight: Typography.calculatorDisplay.fontWeight,
+  expression: {
+    fontSize: 56,
+    fontWeight: "300",
     color: CalculatorColors.text,
     textAlign: "right",
   },
+  result: {
+    fontSize: 32,
+    fontWeight: "400",
+    color: CalculatorColors.textSecondary,
+    textAlign: "right",
+    marginTop: 8,
+  },
   buttonsContainer: {
-    paddingHorizontal: BUTTON_MARGIN,
+    paddingHorizontal: BUTTON_GAP,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: BUTTON_MARGIN,
+    marginBottom: BUTTON_GAP,
   },
   buttonWrapper: {
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
-    marginHorizontal: BUTTON_MARGIN / 2,
-  },
-  wideButton: {
-    width: BUTTON_SIZE * 2 + BUTTON_MARGIN,
   },
   button: {
     flex: 1,
@@ -342,22 +372,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   numberButton: {
-    backgroundColor: CalculatorColors.buttons,
+    backgroundColor: CalculatorColors.numberButton,
   },
   operatorButton: {
-    backgroundColor: CalculatorColors.operators,
+    backgroundColor: CalculatorColors.operatorButton,
   },
-  functionButton: {
-    backgroundColor: "#D4D4D2",
+  clearButton: {
+    backgroundColor: CalculatorColors.functionButton,
+  },
+  equalsButton: {
+    backgroundColor: CalculatorColors.equalsButton,
   },
   buttonLabel: {
-    fontSize: Typography.calculatorButton.fontSize,
-    fontWeight: Typography.calculatorButton.fontWeight,
+    fontSize: 28,
+    fontWeight: "400",
   },
   buttonText: {
     color: CalculatorColors.text,
   },
-  operatorText: {
-    color: CalculatorColors.operatorText,
+  clearText: {
+    color: CalculatorColors.text,
+  },
+  equalsText: {
+    color: "#1C1C1C",
   },
 });

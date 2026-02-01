@@ -1,13 +1,15 @@
 import { Platform } from "react-native";
 
 export const CalculatorColors = {
-  background: "#FFFFFF",
-  display: "#F5F5F5",
-  buttons: "#E0E0E0",
-  operators: "#FF9800",
-  operatorText: "#FFFFFF",
-  text: "#212121",
-  buttonPressed: "#D0D0D0",
+  background: "#1C1C1C",
+  display: "#1C1C1C",
+  numberButton: "#3D3D3D",
+  operatorButton: "#6B5B7A",
+  functionButton: "#6B7A3D",
+  equalsButton: "#A8C8E8",
+  text: "#FFFFFF",
+  textSecondary: "#4DB6AC",
+  buttonPressed: "#2D2D2D",
 };
 
 export const ChatColors = {
