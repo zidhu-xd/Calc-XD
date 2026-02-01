@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,11 @@ import {
   ScrollView,
   Modal,
   TextInput,
+  AppState,
+  AppStateStatus,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -57,6 +59,19 @@ export default function SettingsScreen() {
   const { lock, unpair, pairedWith } = useApp();
 
   const [showCodeModal, setShowCodeModal] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
+        if (nextAppState === "background" || nextAppState === "inactive") {
+          lock();
+          navigation.replace("Calculator");
+        }
+      });
+
+      return () => subscription.remove();
+    }, [lock, navigation])
+  );
   const [showUnpairModal, setShowUnpairModal] = useState(false);
   const [newCode, setNewCode] = useState("");
   const [confirmCode, setConfirmCode] = useState("");

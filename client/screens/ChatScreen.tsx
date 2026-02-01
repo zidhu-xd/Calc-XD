@@ -8,9 +8,11 @@ import {
   Pressable,
   Image,
   ListRenderItem,
+  AppState,
+  AppStateStatus,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import * as Haptics from "expo-haptics";
@@ -82,11 +84,18 @@ export default function ChatScreen() {
 
   const [inputText, setInputText] = useState("");
 
-  useEffect(() => {
-    if (!isUnlocked) {
-      navigation.replace("Calculator");
-    }
-  }, [isUnlocked, navigation]);
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
+        if (nextAppState === "background" || nextAppState === "inactive") {
+          lock();
+          navigation.replace("Calculator");
+        }
+      });
+
+      return () => subscription.remove();
+    }, [lock, navigation])
+  );
 
   const handleSend = useCallback(async () => {
     if (!inputText.trim()) return;

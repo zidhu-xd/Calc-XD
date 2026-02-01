@@ -22,7 +22,7 @@ export default function SetupScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<SetupScreenRouteProp>();
-  const { setupComplete } = useApp();
+  const { setupComplete, unlock } = useApp();
 
   const [code, setCode] = useState(route.params?.code || "");
   const [confirmCode, setConfirmCode] = useState("");
@@ -88,6 +88,7 @@ export default function SetupScreen() {
 
   const handleComplete = async (finalCode: string) => {
     await setupComplete(finalCode);
+    unlock();
     navigation.replace("Pairing");
   };
 

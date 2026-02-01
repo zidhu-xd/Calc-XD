@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import * as Crypto from "expo-crypto";
+import { Platform } from "react-native";
 
 const KEYS = {
   UNLOCK_CODE: "unlock_code",
@@ -19,21 +20,44 @@ export interface Message {
   status: "sent" | "delivered" | "read";
 }
 
+async function secureGet(key: string): Promise<string | null> {
+  if (Platform.OS === "web") {
+    return await AsyncStorage.getItem(`secure_${key}`);
+  }
+  return await SecureStore.getItemAsync(key);
+}
+
+async function secureSet(key: string, value: string): Promise<void> {
+  if (Platform.OS === "web") {
+    await AsyncStorage.setItem(`secure_${key}`, value);
+  } else {
+    await SecureStore.setItemAsync(key, value);
+  }
+}
+
+async function secureDelete(key: string): Promise<void> {
+  if (Platform.OS === "web") {
+    await AsyncStorage.removeItem(`secure_${key}`);
+  } else {
+    await SecureStore.deleteItemAsync(key);
+  }
+}
+
 export async function getDeviceId(): Promise<string> {
-  let deviceId = await SecureStore.getItemAsync(KEYS.DEVICE_ID);
+  let deviceId = await secureGet(KEYS.DEVICE_ID);
   if (!deviceId) {
     deviceId = Crypto.randomUUID();
-    await SecureStore.setItemAsync(KEYS.DEVICE_ID, deviceId);
+    await secureSet(KEYS.DEVICE_ID, deviceId);
   }
   return deviceId;
 }
 
 export async function setUnlockCode(code: string): Promise<void> {
-  await SecureStore.setItemAsync(KEYS.UNLOCK_CODE, code);
+  await secureSet(KEYS.UNLOCK_CODE, code);
 }
 
 export async function getUnlockCode(): Promise<string | null> {
-  return await SecureStore.getItemAsync(KEYS.UNLOCK_CODE);
+  return await secureGet(KEYS.UNLOCK_CODE);
 }
 
 export async function verifyUnlockCode(code: string): Promise<boolean> {
@@ -91,8 +115,8 @@ export async function addMessage(message: Message): Promise<Message[]> {
 }
 
 export async function clearAllData(): Promise<void> {
-  await SecureStore.deleteItemAsync(KEYS.UNLOCK_CODE);
-  await SecureStore.deleteItemAsync(KEYS.DEVICE_ID);
+  await secureDelete(KEYS.UNLOCK_CODE);
+  await secureDelete(KEYS.DEVICE_ID);
   await AsyncStorage.multiRemove([
     KEYS.PAIRING_CODE,
     KEYS.PAIRED_WITH,
