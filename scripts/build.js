@@ -3,6 +3,8 @@ const path = require("path");
 const { spawn } = require("child_process");
 const { Readable } = require("stream");
 const { pipeline } = require("stream/promises");
+const { globSync } = require("glob");
+
 
 let metroProcess = null;
 
@@ -83,8 +85,8 @@ function clearMetroCache() {
   console.log("Clearing Metro cache...");
 
   const cacheDirs = [
-    ...fs.globSync(".metro-cache"),
-    ...fs.globSync("node_modules/.cache/metro"),
+    ...globSync(".metro-cache"),
+    ...globSync("node_modules/.cache/metro"),
   ];
 
   for (const dir of cacheDirs) {
