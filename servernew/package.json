@@ -1,0 +1,22 @@
+{
+  "name": "calc-xd-server",
+  "version": "1.0.0",
+  "description": "Node.js server for Calc-XD with PostgreSQL database support",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "db:push": "node db-push.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.39.3",
+    "express": "^5.0.1",
+    "pg": "^8.16.3",
+    "zod": "^3.24.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
